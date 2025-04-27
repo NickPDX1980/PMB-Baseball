@@ -17,9 +17,9 @@ a:hover { text-decoration: underline; }
 
 table {
     width: 100%;
-    /* min-width: 600px; */ /* Removing min-width for now */
+    /* min-width: 600px; */ /* Can likely remove this with auto layout */
     border-collapse: separate; border-spacing: 0;
-    table-layout: auto; /* Back to auto layout for diagnosis */
+    table-layout: auto; /* Using auto layout */
 }
 
 th, td {
@@ -27,8 +27,6 @@ th, td {
     padding: 8px;
     text-align: left; vertical-align: top;
     white-space: nowrap; background-color: #ffffff;
-    /* REMOVED default min-width */
-    /* REMOVED global overflow handling */
 }
 th:first-child, td:first-child { border-left: 1px solid #ccc; }
 thead tr:first-child th { border-top: 1px solid #ccc; }
@@ -38,15 +36,8 @@ tfoot tr:first-child td { border-top: 1px solid #ccc; }
 th { background-color: #f2f2f2; position: sticky; top: 0; z-index: 2; cursor: pointer; user-select: none; }
 th:hover { background-color: #e0e0e0; }
 
-/* --- REMOVED ALL Specific Widths for First 3 Columns --- */
-
-/* --- Diagnostic Style for Column 0 --- */
-th:nth-child(1), td:nth-child(1) {
-    background-color: lightyellow !important; /* TEMP: Highlight column 0 */
-    overflow: hidden; /* Keep overflow handling */
-    text-overflow: ellipsis;
-    /* No explicit width set here now */
-}
+/* --- REMOVED Explicit Widths and Diagnostic Style for Column 0 --- */
+/* Column widths will now be determined by browser/content */
 
 /* --- Sticky Column (ONLY Column 2 / :nth-child(3)) --- */
 th:nth-child(3), td:nth-child(3) {
@@ -54,11 +45,13 @@ th:nth-child(3), td:nth-child(3) {
     left: 0;
     z-index: 3;
     background-color: #ffffff; /* Needs background */
-    /* No explicit width set here now */
+    /* Optional: Define a width/min-width if desired for this sticky column */
+     width: 50px;
+     min-width: 50px;
+     padding-left: 4px; padding-right: 4px;
 }
 thead th:nth-child(3) { background-color: #f2f2f2; z-index: 4; }
 tfoot td:nth-child(3) { background-color: #fafafa; }
-
 
 /* --- Footer Styling --- */
 tfoot td { font-weight: bold; background-color: #fafafa; }
