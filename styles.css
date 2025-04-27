@@ -1,87 +1,95 @@
-/* Basic styles for readability */
+/* Basic styles */
 body {
     font-family: sans-serif;
     line-height: 1.6;
     margin: 20px;
 }
-
 h1, h2 {
     color: #006400; /* Parkrose green */
 }
+ul { list-style: none; padding: 0; }
+li { margin-bottom: 10px; }
+a { text-decoration: none; color: #0000CD; }
+a:hover { text-decoration: underline; }
+.nav-link { display: block; margin-top: 20px; }
+.error-message { color: red; font-weight: bold; margin-top: 15px; }
 
-/* Styles for navigation links on index.html */
-ul {
-    list-style: none;
-    padding: 0;
-}
-
-li {
-    margin-bottom: 10px;
-}
-
-a {
-    text-decoration: none;
-    color: #0000CD; /* Medium blue for links */
-}
-
-a:hover {
-    text-decoration: underline;
-}
-
-/* Style for navigation links back home */
-.nav-link {
-    display: block;
-    margin-top: 20px;
-}
-
-/* Style for error messages */
-.error-message {
-    color: red;
-    font-weight: bold;
-    margin-top: 15px;
-}
-
-/* --- Styles for Table and Scrolling --- */
+/* --- Styles for Table, Scrolling, and Sticky Panes --- */
 .table-container {
     width: 100%;
-    overflow-x: auto; /* Enables horizontal scrolling */
+    overflow-x: auto; /* Enable horizontal scrolling */
+    overflow-y: hidden; /* Prevent container itself from scrolling vertically if table fits */
     margin-top: 20px;
-    border: 1px solid #ccc; /* Optional: adds a border around the scrollable area */
+    border: 1px solid #ccc;
+    max-height: 70vh; /* Optional: Limit table height and make container vertically scrollable */
+    /* overflow-y: auto; */ /* Uncomment this if you want vertical scroll on the container */
 }
 
 table {
-    width: 100%; /* Make table initially take container width */
-    min-width: 600px; /* Optional: Suggest a minimum width before scrolling starts */
-    border-collapse: collapse;
+    width: 100%;
+    min-width: 600px;
+    border-collapse: separate; /* Use separate for sticky columns to work reliably with borders */
+    border-spacing: 0; /* Remove space between borders */
 }
 
 th, td {
-    border: 1px solid #ccc;
+    border-bottom: 1px solid #ccc; /* Style borders slightly differently for separate model */
+    border-right: 1px solid #ccc;
     padding: 8px;
     text-align: left;
     vertical-align: top;
-    white-space: nowrap; /* Prevent headers and cells from wrapping */
+    white-space: nowrap; /* Keep content on one line */
+    /* Background needed for sticky elements to hide content behind them */
+    background-color: #ffffff;
 }
+/* Add left/top borders for the first row/column */
+th:first-child, td:first-child { border-left: 1px solid #ccc; }
+thead tr:first-child th { border-top: 1px solid #ccc; }
+tfoot tr:first-child td { border-top: 1px solid #ccc; } /* Add top border for footer */
 
+
+/* --- Sticky Header --- */
 th {
+    background-color: #f2f2f2; /* Header background */
+    position: sticky;
+    top: 0;
+    z-index: 2; /* Ensure header is above body cells but below frozen columns */
+    cursor: pointer;
+    user-select: none;
+}
+th:hover { background-color: #e0e0e0; }
+
+/* --- Sticky Columns (First 3) --- */
+/* Apply sticky to first 3 header cells AND first 3 body/footer cells */
+th:nth-child(1), td:nth-child(1) { position: sticky; left: 0; z-index: 3; }
+th:nth-child(2), td:nth-child(2) { position: sticky; left: 80px; z-index: 3; } /* Adjust 'left' based on actual width of col 1 */
+th:nth-child(3), td:nth-child(3) { position: sticky; left: 160px; z-index: 3; } /* Adjust 'left' based on actual width of col 1+2 */
+
+/* Ensure sticky header cells have correct background */
+thead th:nth-child(1),
+thead th:nth-child(2),
+thead th:nth-child(3) {
     background-color: #f2f2f2;
-    position: sticky; /* Make header sticky within the container */
-    top: 0;          /* Stick to the top when scrolling vertically (if container has vertical scroll) */
-    cursor: pointer; /* Indicate headers are clickable for sorting */
-    user-select: none; /* Prevent text selection on click */
+    z-index: 4; /* Make sticky header columns highest priority */
 }
 
-th:hover {
-    background-color: #e0e0e0; /* Slight highlight on hover */
+/* Make sure body/footer sticky cells have correct background */
+tbody td:nth-child(1), tbody td:nth-child(2), tbody td:nth-child(3),
+tfoot td:nth-child(1), tfoot td:nth-child(2), tfoot td:nth-child(3) {
+    background-color: #ffffff; /* Ensure body background covers */
 }
 
-/* Optional: Add class for visual sorting indicator later */
-.sort-asc::after {
-    content: ' ▲';
-    font-size: 0.8em;
+/* --- Footer Styling --- */
+tfoot td {
+    font-weight: bold;
+    background-color: #fafafa; /* Slightly different background for footer */
+}
+/* Ensure sticky footer cells get correct background */
+tfoot td:nth-child(1), tfoot td:nth-child(2), tfoot td:nth-child(3) {
+    background-color: #fafafa;
 }
 
-.sort-desc::after {
-    content: ' ▼';
-    font-size: 0.8em;
-}
+
+/* Sorting indicators */
+.sort-asc::after { content: ' ▲'; font-size: 0.8em; }
+.sort-desc::after { content: ' ▼'; font-size: 0.8em; }
