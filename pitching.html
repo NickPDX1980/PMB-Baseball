@@ -21,176 +21,140 @@
     <div id="error-container"></div> <a href="index.html" class="nav-link">&laquo; Back to Home</a>
 
     <script>
-        // --- Sorting Function ---
+        // --- Helper function to remove leading/trailing quotes ---
+        function stripQuotes(str) {
+            if (typeof str !== 'string') return str;
+            const trimmed = str.trim();
+            if (trimmed.length >= 2 && trimmed.startsWith('"') && trimmed.endsWith('"')) {
+                return trimmed.substring(1, trimmed.length - 1);
+            }
+            return trimmed;
+        }
+        // --- End of Helper Function ---
+
+
+        // --- Sorting Function (UPDATED) ---
         function sortTable(columnIndex, tbodyId, clickedThElement) {
             const tbody = document.getElementById(tbodyId);
             const rowsArray = Array.from(tbody.querySelectorAll('tr'));
-            if (rowsArray.length <= 1) return; // No rows to sort
+            if (rowsArray.length <= 1) return;
 
-            // Determine sort direction
             const currentDirection = clickedThElement.dataset.sortDirection || 'none';
-            let newDirection;
-            if (currentDirection === 'ascending') {
-                newDirection = 'descending';
-            } else {
-                // Default to ascending if 'none' or 'descending'
-                newDirection = 'ascending';
-            }
+            let newDirection = (currentDirection === 'ascending') ? 'descending' : 'ascending';
 
-            // Reset other headers' direction and visual indicator
             const allHeaders = clickedThElement.closest('thead').querySelectorAll('th');
             allHeaders.forEach(th => {
-                // Only reset if it's not the currently clicked header
                 if (th !== clickedThElement) {
                      delete th.dataset.sortDirection;
                      th.classList.remove('sort-asc', 'sort-desc');
                 }
             });
 
-            // Set new direction and visual indicator for clicked header
             clickedThElement.dataset.sortDirection = newDirection;
-            clickedThElement.classList.remove('sort-asc', 'sort-desc'); // Remove old class first
+            clickedThElement.classList.remove('sort-asc', 'sort-desc');
             clickedThElement.classList.add(newDirection === 'ascending' ? 'sort-asc' : 'sort-desc');
 
-
-            // Simple data type detection (check first data cell)
-            const firstDataCell = rowsArray[0].querySelectorAll('td')[columnIndex];
-            const sampleValue = firstDataCell ? firstDataCell.textContent.trim() : '';
-            // Consider a value numeric if it's not empty and parseFloat doesn't return NaN
+            const firstDataCell = rowsArray[0]?.querySelectorAll('td')[columnIndex];
+            const rawSampleValue = firstDataCell ? firstDataCell.textContent : '';
+            const sampleValue = stripQuotes(rawSampleValue);
             const isNumeric = sampleValue !== '' && !isNaN(parseFloat(sampleValue));
             console.log(`Sorting column ${columnIndex} as ${isNumeric ? 'Numeric' : 'Text'}`);
 
-            // Sort the array
             rowsArray.sort((rowA, rowB) => {
                 const cellA = rowA.querySelectorAll('td')[columnIndex];
                 const cellB = rowB.querySelectorAll('td')[columnIndex];
-
-                const valueA = cellA ? cellA.textContent.trim() : '';
-                const valueB = cellB ? cellB.textContent.trim() : '';
-
+                const valueA = stripQuotes(cellA ? cellA.textContent : '');
+                const valueB = stripQuotes(cellB ? cellB.textContent : '');
                 let comparison = 0;
-
                 if (isNumeric) {
-                    // Attempt numeric comparison, treat non-numeric values in column as 0
-                    const numA = parseFloat(valueA) || 0;
-                    const numB = parseFloat(valueB) || 0;
-                    comparison = numA - numB;
+                    const numA = parseFloat(valueA);
+                    const numB = parseFloat(valueB);
+                    if (isNaN(numA) && isNaN(numB)) comparison = 0;
+                    else if (isNaN(numA)) comparison = 1;
+                    else if (isNaN(numB)) comparison = -1;
+                    else comparison = numA - numB;
                 } else {
-                    // Text comparison using localeCompare for better handling of different characters
                     comparison = valueA.localeCompare(valueB);
                 }
-
-                // Apply direction
                 return (newDirection === 'ascending') ? comparison : (comparison * -1);
             });
 
-            // Re-populate the table body with sorted rows using DocumentFragment
             const fragment = document.createDocumentFragment();
-            rowsArray.forEach(row => {
-                fragment.appendChild(row);
-            });
-            tbody.innerHTML = ''; // Clear existing rows efficiently
-            tbody.appendChild(fragment); // Append sorted rows back
-
+            rowsArray.forEach(row => fragment.appendChild(row));
+            tbody.innerHTML = '';
+            tbody.appendChild(fragment);
             console.log(`Table sorted by column ${columnIndex}, direction: ${newDirection}`);
         }
         // --- End of Sorting Function ---
 
 
-        // --- Load CSV Data Function ---
+        // --- Load CSV Data Function (UPDATED) ---
         async function loadCsvData(csvFilename, theadId, tbodyId, errorContainerId) {
             const thead = document.getElementById(theadId);
             const tbody = document.getElementById(tbodyId);
             const errorContainer = document.getElementById(errorContainerId);
 
-            // Clear previous content/errors
             thead.innerHTML = '';
-            tbody.innerHTML = '<tr><td>Loading stats...</td></tr>'; // Placeholder
+            tbody.innerHTML = '<tr><td>Loading stats...</td></tr>';
             errorContainer.innerHTML = '';
 
             try {
                 console.log(`Workspaceing: ${csvFilename}`);
                 const response = await fetch(csvFilename);
                 console.log(`Workspace response status for ${csvFilename}: ${response.status}`);
-
-                if (!response.ok) {
-                    throw new Error(`Network response was not ok: ${response.statusText} (Status: ${response.status}). Check file path and permissions.`);
-                }
+                if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText} (Status: ${response.status}).`);
 
                 const csvData = await response.text();
-                console.log(`--- Raw CSV Data for ${csvFilename} ---`);
-                // console.log(csvData); // Keep commented unless debugging raw data
-                console.log(`--- End Raw CSV Data ---`);
-
-                const lines = csvData.trim().split(/\r?\n/); // Robust line splitting
-                console.log(`Number of lines found after split for ${csvFilename}: ${lines.length}`);
-
+                const lines = csvData.trim().split(/\r?\n/);
+                console.log(`Number of lines found after split: ${lines.length}`);
                 if (lines.length < 1 || lines[0].trim() === '') {
                     tbody.innerHTML = '<tr><td>CSV file appears to be empty or missing headers.</td></tr>';
-                    console.error(`CSV file '${csvFilename}' is empty or header row is missing.`);
                     return;
                 }
 
-                // --- Process Header Row (lines[0]) ---
                 const headerValues = lines[0].split(',');
                 const numColumns = headerValues.length;
                 const headerRow = document.createElement('tr');
-
                 headerValues.forEach((headerText, index) => {
                     const th = document.createElement('th');
-                    th.textContent = headerText.trim();
-                    th.dataset.columnIndex = index; // Store index for sorting
-                    th.title = `Click to sort by ${headerText.trim()}`; // Tooltip
-
-                    // Add click listener that calls sortTable
+                    const cleanHeaderText = stripQuotes(headerText); // Use helper
+                    th.textContent = cleanHeaderText;
+                    th.dataset.columnIndex = index;
+                    th.title = `Click to sort by ${cleanHeaderText}`;
                     th.addEventListener('click', (event) => {
-                         const clickedHeader = event.currentTarget; // Get the TH element that was clicked
-                         console.log(`Clicked header: ${headerText.trim()}, Column index: ${index}`);
-                         // Call the sorting function, passing index, tbody ID, and the clicked TH element
+                         const clickedHeader = event.currentTarget;
+                         console.log(`Clicked header: ${cleanHeaderText}, Column index: ${index}`);
                          sortTable(index, tbodyId, clickedHeader);
                     });
                     headerRow.appendChild(th);
                 });
                 thead.appendChild(headerRow);
-                console.log(`Processed header with ${numColumns} columns for ${csvFilename}.`);
+                console.log(`Processed header with ${numColumns} columns.`);
 
-
-                // --- Process Data Rows (lines[1] onwards) ---
-                tbody.innerHTML = ''; // Clear "Loading..." message before adding data
-
+                tbody.innerHTML = ''; // Clear "Loading..."
                 if (lines.length <= 1) {
                      tbody.innerHTML = `<tr><td colspan="${numColumns}">No data rows found below the header.</td></tr>`;
-                     console.warn(`CSV file '${csvFilename}' contains only a header row.`);
                      return;
                 }
-
                 for (let i = 1; i < lines.length; i++) {
-                    if (lines[i].trim() === '') {
-                        continue; // Skip empty lines
-                    }
+                    if (lines[i].trim() === '') continue;
                     const dataValues = lines[i].split(',');
                     const dataRow = document.createElement('tr');
-
-                    // Iterate based on the number of columns found in the header
                     for (let j = 0; j < numColumns; j++) {
                         const td = document.createElement('td');
-                        // Use value or empty string if data is missing for a column in this row
-                        td.textContent = dataValues[j] ? dataValues[j].trim() : '';
+                        td.textContent = stripQuotes(dataValues[j]); // Use helper
                         dataRow.appendChild(td);
                     }
                     tbody.appendChild(dataRow);
                 }
-                console.log(`Successfully processed ${lines.length - 1} data lines from ${csvFilename}`);
-
+                console.log(`Successfully processed ${lines.length - 1} data lines.`);
             } catch (error) {
                 console.error(`Error loading or parsing CSV (${csvFilename}):`, error);
-                tbody.innerHTML = ''; // Clear table body on error
-                thead.innerHTML = ''; // Clear headers on error too
-                errorContainer.innerHTML = `<p class="error-message">Error loading stats (${csvFilename}): ${error.message}</p>`;
+                tbody.innerHTML = ''; thead.innerHTML = '';
+                errorContainer.innerHTML = `<p class="error-message">Error loading stats: ${error.message}</p>`;
             }
         }
         // --- End of loadCsvData Function ---
-
 
         // --- Initial Load Trigger ---
         document.addEventListener('DOMContentLoaded', () => {
