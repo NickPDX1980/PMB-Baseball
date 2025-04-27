@@ -17,14 +17,12 @@ a:hover { text-decoration: underline; }
 /* --- Styles for Table, Scrolling, and Sticky Panes --- */
 .table-container {
     width: 100%;
-    overflow-x: auto; /* Enable horizontal scrolling */
-    /* --- VERTICAL SCROLL / HEIGHT LIMIT --- */
-    max-height: 70vh; /* Limit container height (e.g., 70% of viewport height, or try '600px') */
-    overflow-y: auto; /* Enable vertical scroll *if* content exceeds max-height */
-    /* --- END VERTICAL SCROLL / HEIGHT LIMIT --- */
+    overflow-x: auto;
+    max-height: 70vh;
+    overflow-y: auto;
     margin-top: 20px;
     border: 1px solid #ccc;
-    position: relative; /* Can help establish context for sticky elements */
+    position: relative;
 }
 
 table {
@@ -41,7 +39,7 @@ th, td {
     text-align: left;
     vertical-align: top;
     white-space: nowrap;
-    background-color: #ffffff; /* Default background for cells */
+    background-color: #ffffff;
 }
 th:first-child, td:first-child { border-left: 1px solid #ccc; }
 thead tr:first-child th { border-top: 1px solid #ccc; }
@@ -52,7 +50,7 @@ tfoot tr:first-child td { border-top: 1px solid #ccc; }
 th {
     background-color: #f2f2f2;
     position: sticky;
-    top: 0; /* Stick to the top of the scrolling container */
+    top: 0;
     z-index: 2;
     cursor: pointer;
     user-select: none;
@@ -60,23 +58,16 @@ th {
 th:hover { background-color: #e0e0e0; }
 
 /* --- Sticky Columns (First 3) --- */
-/* Apply sticky to first 3 header, body, and footer cells */
 th:nth-child(1), td:nth-child(1) { position: sticky; left: 0; z-index: 3; }
-th:nth-child(2), td:nth-child(2) { position: sticky; left: 80px; z-index: 3; } /* Adjust based on col 1 width */
-th:nth-child(3), td:nth-child(3) { position: sticky; left: 160px; z-index: 3; } /* Adjust based on col 1+2 width */
+th:nth-child(2), td:nth-child(2) { position: sticky; left: 80px; z-index: 3; } /* Adjust as needed */
+th:nth-child(3), td:nth-child(3) { position: sticky; left: 160px; z-index: 3; } /* Adjust as needed */
 
-/* Ensure sticky header columns have correct background & are highest priority */
-thead th:nth-child(1),
-thead th:nth-child(2),
-thead th:nth-child(3) {
-    background-color: #f2f2f2;
-    z-index: 4;
+thead th:nth-child(1), thead th:nth-child(2), thead th:nth-child(3) {
+    background-color: #f2f2f2; z-index: 4;
 }
-
-/* Ensure sticky body/footer cells have correct background */
 tbody td:nth-child(1), tbody td:nth-child(2), tbody td:nth-child(3),
 tfoot td:nth-child(1), tfoot td:nth-child(2), tfoot td:nth-child(3) {
-    background-color: #ffffff; /* Ensure body background covers */
+    background-color: #ffffff;
 }
 
 /* --- Footer Styling --- */
@@ -84,7 +75,6 @@ tfoot td {
     font-weight: bold;
     background-color: #fafafa;
 }
-/* Ensure sticky footer cells get correct background */
 tfoot td:nth-child(1), tfoot td:nth-child(2), tfoot td:nth-child(3) {
     background-color: #fafafa;
 }
@@ -93,3 +83,29 @@ tfoot td:nth-child(1), tfoot td:nth-child(2), tfoot td:nth-child(3) {
 /* Sorting indicators */
 .sort-asc::after { content: ' ▲'; font-size: 0.8em; }
 .sort-desc::after { content: ' ▼'; font-size: 0.8em; }
+
+/* --- Header Key Styling --- */
+#header-key-container {
+    margin-top: 30px;
+    padding-top: 15px;
+    border-top: 1px solid #ccc;
+}
+#header-key-container h2 {
+    margin-bottom: 10px;
+}
+#header-key-container ul {
+    list-style: none;
+    padding: 0;
+    column-count: 2; /* Display in columns if space allows */
+    column-gap: 20px;
+}
+#header-key-container li {
+    margin-bottom: 8px;
+    font-size: 0.9em;
+}
+/* Adjust column count for smaller screens if needed */
+@media (max-width: 600px) {
+    #header-key-container ul {
+        column-count: 1;
+    }
+}
