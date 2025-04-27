@@ -21,7 +21,83 @@
     <div id="error-container"></div> <a href="index.html" class="nav-link">&laquo; Back to Home</a>
 
     <script>
-        // --- Paste the SAME updated loadCsvData function from batting.html here ---
+       // --- Sorting Function ---
+        function sortTable(columnIndex, tbodyId, clickedThElement) {
+            const tbody = document.getElementById(tbodyId);
+            const rowsArray = Array.from(tbody.querySelectorAll('tr'));
+            if (rowsArray.length <= 1) return; // No rows to sort
+
+            // Determine sort direction
+            const currentDirection = clickedThElement.dataset.sortDirection || 'none';
+            let newDirection;
+            if (currentDirection === 'ascending') {
+                newDirection = 'descending';
+            } else {
+                // Default to ascending if 'none' or 'descending'
+                newDirection = 'ascending';
+            }
+
+            // Reset other headers' direction and visual indicator
+            const allHeaders = clickedThElement.closest('thead').querySelectorAll('th');
+            allHeaders.forEach(th => {
+                // Only reset if it's not the currently clicked header
+                if (th !== clickedThElement) {
+                     delete th.dataset.sortDirection;
+                     th.classList.remove('sort-asc', 'sort-desc');
+                }
+            });
+
+            // Set new direction and visual indicator for clicked header
+            clickedThElement.dataset.sortDirection = newDirection;
+            clickedThElement.classList.remove('sort-asc', 'sort-desc'); // Remove old class first
+            clickedThElement.classList.add(newDirection === 'ascending' ? 'sort-asc' : 'sort-desc');
+
+
+            // Simple data type detection (check first data cell)
+            const firstDataCell = rowsArray[0].querySelectorAll('td')[columnIndex];
+            const sampleValue = firstDataCell ? firstDataCell.textContent.trim() : '';
+            // Consider a value numeric if it's not empty and parseFloat doesn't return NaN
+            const isNumeric = sampleValue !== '' && !isNaN(parseFloat(sampleValue));
+            console.log(`Sorting column ${columnIndex} as ${isNumeric ? 'Numeric' : 'Text'}`);
+
+            // Sort the array
+            rowsArray.sort((rowA, rowB) => {
+                const cellA = rowA.querySelectorAll('td')[columnIndex];
+                const cellB = rowB.querySelectorAll('td')[columnIndex];
+
+                const valueA = cellA ? cellA.textContent.trim() : '';
+                const valueB = cellB ? cellB.textContent.trim() : '';
+
+                let comparison = 0;
+
+                if (isNumeric) {
+                    // Attempt numeric comparison, treat non-numeric values in column as 0
+                    const numA = parseFloat(valueA) || 0;
+                    const numB = parseFloat(valueB) || 0;
+                    comparison = numA - numB;
+                } else {
+                    // Text comparison using localeCompare for better handling of different characters
+                    comparison = valueA.localeCompare(valueB);
+                }
+
+                // Apply direction
+                return (newDirection === 'ascending') ? comparison : (comparison * -1);
+            });
+
+            // Re-populate the table body with sorted rows using DocumentFragment
+            const fragment = document.createDocumentFragment();
+            rowsArray.forEach(row => {
+                fragment.appendChild(row);
+            });
+            tbody.innerHTML = ''; // Clear existing rows efficiently
+            tbody.appendChild(fragment); // Append sorted rows back
+
+            console.log(`Table sorted by column ${columnIndex}, direction: ${newDirection}`);
+        }
+        // --- End of Sorting Function ---
+
+
+        // --- Load CSV Data Function ---
         async function loadCsvData(csvFilename, theadId, tbodyId, errorContainerId) {
             const thead = document.getElementById(theadId);
             const tbody = document.getElementById(tbodyId);
@@ -66,12 +142,12 @@
                     th.dataset.columnIndex = index; // Store index for sorting
                     th.title = `Click to sort by ${headerText.trim()}`; // Tooltip
 
-                    // Add click listener placeholder for sorting (we'll implement sortTable soon)
+                    // Add click listener that calls sortTable
                     th.addEventListener('click', (event) => {
-                         const clickedHeader = event.currentTarget;
+                         const clickedHeader = event.currentTarget; // Get the TH element that was clicked
                          console.log(`Clicked header: ${headerText.trim()}, Column index: ${index}`);
-                         // sortTable(index, tbodyId, clickedHeader); // Call sorting function here eventually
-                         alert(`Sorting by column ${index + 1} ("${headerText.trim()}") - functionality coming soon!`);
+                         // Call the sorting function, passing index, tbody ID, and the clicked TH element
+                         sortTable(index, tbodyId, clickedHeader);
                     });
                     headerRow.appendChild(th);
                 });
@@ -116,7 +192,7 @@
         // --- End of loadCsvData Function ---
 
 
-        // --- Updated Call to loadCsvData ---
+        // --- Initial Load Trigger ---
         document.addEventListener('DOMContentLoaded', () => {
             loadCsvData('fielding stats.csv', 'fielding-thead', 'fielding-tbody', 'error-container');
         });
