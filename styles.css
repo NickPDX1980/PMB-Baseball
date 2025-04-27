@@ -17,9 +17,9 @@ a:hover { text-decoration: underline; }
 
 table {
     width: 100%;
+    /* min-width: 600px; */ /* Removing min-width for now */
     border-collapse: separate; border-spacing: 0;
-    /* --- Use fixed layout to enforce widths --- */
-    table-layout: fixed;
+    table-layout: auto; /* Back to auto layout for diagnosis */
 }
 
 th, td {
@@ -27,11 +27,8 @@ th, td {
     padding: 8px;
     text-align: left; vertical-align: top;
     white-space: nowrap; background-color: #ffffff;
-    /* --- Increased default min-width for cols 4+ --- */
-    min-width: 100px; /* ADJUST AS NEEDED (was 80px) */
-    /* --- Apply overflow handling to ALL cells with fixed layout --- */
-    overflow: hidden;
-    text-overflow: ellipsis;
+    /* REMOVED default min-width */
+    /* REMOVED global overflow handling */
 }
 th:first-child, td:first-child { border-left: 1px solid #ccc; }
 thead tr:first-child th { border-top: 1px solid #ccc; }
@@ -41,30 +38,27 @@ tfoot tr:first-child td { border-top: 1px solid #ccc; }
 th { background-color: #f2f2f2; position: sticky; top: 0; z-index: 2; cursor: pointer; user-select: none; }
 th:hover { background-color: #e0e0e0; }
 
-/* --- Define Specific Widths for First 3 Columns (Overrides default min-width) --- */
-/* !! ADJUST THESE WIDTHS AND THE CORRESPONDING 'left' VALUE FOR COL 3 !! */
-/* Column 0 (Collapses, e.g., Player Name) */
+/* --- REMOVED ALL Specific Widths for First 3 Columns --- */
+
+/* --- Diagnostic Style for Column 0 --- */
 th:nth-child(1), td:nth-child(1) {
-    width: 150px !important; /* ADJUST WIDTH - Added !important for testing */
-    min-width: 150px !important; /* Added !important for testing */
-    padding-left: 4px; padding-right: 4px;
-    /* overflow settings inherited */
-}
-/* Column 1 (Collapses, first letter only) */
-th:nth-child(2), td:nth-child(2) {
-    width: 40px; /* ADJUST WIDTH */ min-width: 40px;
-    padding-left: 4px; padding-right: 4px; text-align: center;
-}
-/* Column 2 (REMAINS VISIBLE AND STICKY, e.g., # or Pos) */
-th:nth-child(3), td:nth-child(3) {
-    width: 50px; /* ADJUST WIDTH */ min-width: 50px;
-    padding-left: 4px; padding-right: 4px;
-    position: sticky; left: 0; z-index: 3; background-color: #ffffff;
+    background-color: lightyellow !important; /* TEMP: Highlight column 0 */
+    overflow: hidden; /* Keep overflow handling */
+    text-overflow: ellipsis;
+    /* No explicit width set here now */
 }
 
-/* --- Ensure Sticky Column 2 (:nth-child(3)) has correct background --- */
+/* --- Sticky Column (ONLY Column 2 / :nth-child(3)) --- */
+th:nth-child(3), td:nth-child(3) {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background-color: #ffffff; /* Needs background */
+    /* No explicit width set here now */
+}
 thead th:nth-child(3) { background-color: #f2f2f2; z-index: 4; }
 tfoot td:nth-child(3) { background-color: #fafafa; }
+
 
 /* --- Footer Styling --- */
 tfoot td { font-weight: bold; background-color: #fafafa; }
