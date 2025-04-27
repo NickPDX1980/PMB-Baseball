@@ -11,20 +11,8 @@ ul { list-style: none; padding: 0; }
 li { margin-bottom: 10px; }
 a { text-decoration: none; color: #0000CD; }
 a:hover { text-decoration: underline; }
-
-/* --- Navigation Links --- */
-.nav-link { /* Style for the link at the BOTTOM */
-    display: block;
-    margin-top: 20px;
-}
-.nav-link-top { /* Style for the link at the TOP */
-    display: block; /* Make it block level */
-    margin-bottom: 15px; /* Add space below it */
-    font-size: 0.9em; /* Slightly smaller */
-}
-/* --- End Navigation Links --- */
-
-
+.nav-link { display: block; margin-top: 20px; }
+.nav-link-top { display: block; margin-bottom: 15px; font-size: 0.9em; }
 .error-message { color: red; font-weight: bold; margin-top: 15px; }
 
 /* --- Styles for Table, Scrolling, and Sticky Panes --- */
@@ -40,15 +28,18 @@ a:hover { text-decoration: underline; }
 
 table {
     width: 100%;
-    min-width: 600px;
+    min-width: 600px; /* Adjust if overall table can be narrower */
     border-collapse: separate;
     border-spacing: 0;
+    /* Optional: Reduce base font size for the whole table */
+    /* font-size: 0.95em; */
 }
 
 th, td {
     border-bottom: 1px solid #ccc;
     border-right: 1px solid #ccc;
-    padding: 8px;
+    padding: 8px; /* Default padding */
+    /* padding: 5px; */ /* Optional: Uncomment for globally reduced padding */
     text-align: left;
     vertical-align: top;
     white-space: nowrap;
@@ -70,17 +61,61 @@ th {
 }
 th:hover { background-color: #e0e0e0; }
 
-/* --- Sticky Columns (First 3) --- */
-th:nth-child(1), td:nth-child(1) { position: sticky; left: 0; z-index: 3; }
-th:nth-child(2), td:nth-child(2) { position: sticky; left: 80px; z-index: 3; } /* Adjust as needed */
-th:nth-child(3), td:nth-child(3) { position: sticky; left: 160px; z-index: 3; } /* Adjust as needed */
+/* --- Define Widths and Reduced Padding for First 3 Columns --- */
+/* Column 1 (#/Number) */
+th:nth-child(1), td:nth-child(1) {
+    width: 50px; /* ADJUST WIDTH for first column */
+    min-width: 50px; /* Ensure it doesn't shrink smaller */
+    padding-left: 4px; /* Reduce padding */
+    padding-right: 4px;
+}
+/* Column 2 (e.g., Player Name) */
+th:nth-child(2), td:nth-child(2) {
+    width: 150px; /* ADJUST WIDTH for second column */
+    min-width: 150px;
+    padding-left: 4px;
+    padding-right: 4px;
+    /* Optional: Allow wrapping for potentially long names */
+    /* white-space: normal; */
+}
+/* Column 3 (e.g., Position/Team) */
+th:nth-child(3), td:nth-child(3) {
+    width: 70px; /* ADJUST WIDTH for third column */
+    min-width: 70px;
+    padding-left: 4px;
+    padding-right: 4px;
+}
 
-thead th:nth-child(1), thead th:nth-child(2), thead th:nth-child(3) {
+/* --- Sticky Columns (First 3) - UPDATE LEFT VALUES --- */
+/* Col 1 */
+th:nth-child(1), td:nth-child(1) {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+}
+/* Col 2 - UPDATE left value to match width of Col 1 */
+th:nth-child(2), td:nth-child(2) {
+    position: sticky;
+    left: 50px; /* MUST match width of col 1 (e.g., 50px) */
+    z-index: 3;
+}
+/* Col 3 - UPDATE left value to match width of Col 1 + Col 2 */
+th:nth-child(3), td:nth-child(3) {
+    position: sticky;
+    left: 200px; /* MUST match width Col 1 + Col 2 (e.g., 50px + 150px = 200px) */
+    z-index: 3;
+}
+
+/* Ensure sticky header columns have correct background & are highest priority */
+thead th:nth-child(1),
+thead th:nth-child(2),
+thead th:nth-child(3) {
     background-color: #f2f2f2; z-index: 4;
 }
+/* Ensure sticky body/footer cells have correct background */
 tbody td:nth-child(1), tbody td:nth-child(2), tbody td:nth-child(3),
 tfoot td:nth-child(1), tfoot td:nth-child(2), tfoot td:nth-child(3) {
-    background-color: #ffffff;
+    background-color: #ffffff; /* Match default cell background */
 }
 
 /* --- Footer Styling --- */
@@ -89,7 +124,7 @@ tfoot td {
     background-color: #fafafa;
 }
 tfoot td:nth-child(1), tfoot td:nth-child(2), tfoot td:nth-child(3) {
-    background-color: #fafafa;
+    background-color: #fafafa; /* Match footer background */
 }
 
 
@@ -98,17 +133,9 @@ tfoot td:nth-child(1), tfoot td:nth-child(2), tfoot td:nth-child(3) {
 .sort-desc::after { content: ' ▼'; font-size: 0.8em; }
 
 /* --- Header Key Styling --- */
-#header-key-container {
-    margin-top: 30px;
-    padding-top: 15px;
-    border-top: 1px solid #ccc;
-}
+#header-key-container { margin-top: 30px; padding-top: 15px; border-top: 1px solid #ccc; }
 #header-key-container h2 { margin-bottom: 10px; }
-#header-key-container ul {
-    list-style: none; padding: 0; column-count: 3; column-gap: 25px;
-}
-#header-key-container li {
-    margin-bottom: 5px; font-size: 0.85em; break-inside: avoid-column;
-}
+#header-key-container ul { list-style: none; padding: 0; column-count: 3; column-gap: 25px; }
+#header-key-container li { margin-bottom: 5px; font-size: 0.85em; break-inside: avoid-column; }
 @media (max-width: 768px) { #header-key-container ul { column-count: 2; } }
 @media (max-width: 480px) { #header-key-container ul { column-count: 1; } }
