@@ -4,95 +4,120 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Batting Stats - Parkrose MS Baseball</title>
-    <link rel="stylesheet" href="styles.css"> </head>
+    <link rel="stylesheet" href="styles.css">
+</head>
 <body>
 
     <h1>Batting Statistics</h1>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Player Name</th>
-                <th>G</th><th>PA</th><th>AB</th><th>R</th><th>H</th>
-                <th>2B</th><th>3B</th><th>HR</th><th>RBI</th><th>BB</th>
-                <th>SO</th><th>AVG</th><th>OBP</th><th>SLG</th>
-            </tr>
-        </thead>
-        <tbody id="batting-tbody">
-            <tr><td colspan="15">Loading stats...</td></tr> </tbody>
-    </table>
+    <div class="table-container">
+        <table>
+            <thead id="batting-thead">
+                </thead>
+            <tbody id="batting-tbody">
+                <tr><td>Loading stats...</td></tr> </tbody>
+        </table>
+    </div>
     <div id="error-container"></div> <a href="index.html" class="nav-link">&laquo; Back to Home</a>
 
     <script>
-        async function loadCsvData(csvFilename, tbodyId, errorContainerId, expectedColumns) {
-    const tbody = document.getElementById(tbodyId);
-    const errorContainer = document.getElementById(errorContainerId);
-    tbody.innerHTML = `<tr><td colspan="${expectedColumns}">Loading stats...</td></tr>`;
-    errorContainer.innerHTML = '';
+        // --- Updated loadCsvData Function ---
+        async function loadCsvData(csvFilename, theadId, tbodyId, errorContainerId) {
+            const thead = document.getElementById(theadId);
+            const tbody = document.getElementById(tbodyId);
+            const errorContainer = document.getElementById(errorContainerId);
 
-    try {
-        console.log(`Workspaceing: ${csvFilename}`); // Debug: Log filename
-        const response = await fetch(csvFilename);
-        console.log(`Workspace response status for ${csvFilename}: ${response.status}`); // Debug: Log status
+            // Clear previous content/errors
+            thead.innerHTML = '';
+            tbody.innerHTML = '<tr><td>Loading stats...</td></tr>'; // Placeholder
+            errorContainer.innerHTML = '';
 
-        if (!response.ok) {
-            throw new Error(`Network response was not ok: ${response.statusText} (Status: ${response.status}). Check file path and permissions on the server.`);
-        }
+            try {
+                console.log(`Workspaceing: ${csvFilename}`);
+                const response = await fetch(csvFilename);
+                console.log(`Workspace response status for ${csvFilename}: ${response.status}`);
 
-        const csvData = await response.text();
-        // --- Debug: Log the raw data received ---
-        console.log(`--- Raw CSV Data for ${csvFilename} ---`);
-        console.log(csvData);
-        console.log(`--- End Raw CSV Data ---`);
+                if (!response.ok) {
+                    throw new Error(`Network response was not ok: ${response.statusText} (Status: ${response.status}). Check file path and permissions.`);
+                }
 
-        // --- Use more robust line splitting ---
-        const lines = csvData.trim().split(/\r?\n/);
+                const csvData = await response.text();
+                console.log(`--- Raw CSV Data for ${csvFilename} ---`);
+                // console.log(csvData); // Keep commented unless debugging raw data
+                console.log(`--- End Raw CSV Data ---`);
 
-        // --- Debug: Log the number of lines found ---
-        console.log(`Number of lines found after split for ${csvFilename}: ${lines.length}`);
-        // console.log('Lines array:', lines); // Optional: Uncomment to see the lines array itself
+                const lines = csvData.trim().split(/\r?\n/); // Robust line splitting
+                console.log(`Number of lines found after split for ${csvFilename}: ${lines.length}`);
 
-        if (lines.length <= 1 || (lines.length === 1 && lines[0] === '')) { // Also check if trimming resulted in just an empty string
-            tbody.innerHTML = `<tr><td colspan="${expectedColumns}">No data rows found in CSV file (lines found: ${lines.length}). Check CSV content and structure.</td></tr>`;
-            console.warn(`CSV file '${csvFilename}' appears to have no data rows after splitting.`);
-            return; // No data rows
-        }
+                if (lines.length < 1 || lines[0].trim() === '') {
+                    tbody.innerHTML = '<tr><td>CSV file appears to be empty or missing headers.</td></tr>';
+                    console.error(`CSV file '${csvFilename}' is empty or header row is missing.`);
+                    return;
+                }
 
-        tbody.innerHTML = ''; // Clear "Loading..." message
+                // --- Process Header Row (lines[0]) ---
+                const headerValues = lines[0].split(',');
+                const numColumns = headerValues.length;
+                const headerRow = document.createElement('tr');
 
-        // Start from 1 to skip header row
-        for (let i = 1; i < lines.length; i++) {
-             // Ignore potential empty lines at the end of the file
-            if (lines[i].trim() === '') {
-                continue;
+                headerValues.forEach((headerText, index) => {
+                    const th = document.createElement('th');
+                    th.textContent = headerText.trim();
+                    th.dataset.columnIndex = index; // Store index for sorting
+                    th.title = `Click to sort by ${headerText.trim()}`; // Tooltip
+
+                    // Add click listener placeholder for sorting (we'll implement sortTable soon)
+                    th.addEventListener('click', (event) => {
+                         const clickedHeader = event.currentTarget;
+                         console.log(`Clicked header: ${headerText.trim()}, Column index: ${index}`);
+                         // sortTable(index, tbodyId, clickedHeader); // Call sorting function here eventually
+                         alert(`Sorting by column ${index + 1} ("${headerText.trim()}") - functionality coming soon!`);
+                    });
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+                console.log(`Processed header with ${numColumns} columns for ${csvFilename}.`);
+
+
+                // --- Process Data Rows (lines[1] onwards) ---
+                tbody.innerHTML = ''; // Clear "Loading..." message before adding data
+
+                if (lines.length <= 1) {
+                     tbody.innerHTML = `<tr><td colspan="${numColumns}">No data rows found below the header.</td></tr>`;
+                     console.warn(`CSV file '${csvFilename}' contains only a header row.`);
+                     return;
+                }
+
+                for (let i = 1; i < lines.length; i++) {
+                    if (lines[i].trim() === '') {
+                        continue; // Skip empty lines
+                    }
+                    const dataValues = lines[i].split(',');
+                    const dataRow = document.createElement('tr');
+
+                    // Iterate based on the number of columns found in the header
+                    for (let j = 0; j < numColumns; j++) {
+                        const td = document.createElement('td');
+                        // Use value or empty string if data is missing for a column in this row
+                        td.textContent = dataValues[j] ? dataValues[j].trim() : '';
+                        dataRow.appendChild(td);
+                    }
+                    tbody.appendChild(dataRow);
+                }
+                console.log(`Successfully processed ${lines.length - 1} data lines from ${csvFilename}`);
+
+            } catch (error) {
+                console.error(`Error loading or parsing CSV (${csvFilename}):`, error);
+                tbody.innerHTML = ''; // Clear table body on error
+                thead.innerHTML = ''; // Clear headers on error too
+                errorContainer.innerHTML = `<p class="error-message">Error loading stats (${csvFilename}): ${error.message}</p>`;
             }
-            const values = lines[i].split(','); // Split row into columns/values
-            if (values.length < expectedColumns) {
-                console.warn(`Row ${i + 1} in ${csvFilename} has fewer columns (${values.length}) than expected (${expectedColumns}). Skipping row. Content: "${lines[i]}"`);
-                continue; // Skip rows that don't have enough columns
-            }
-
-            const row = document.createElement('tr');
-            for (let j = 0; j < expectedColumns; j++) {
-                const cell = document.createElement('td');
-                // Use value or empty string if undefined/null after split
-                cell.textContent = values[j] ? values[j].trim() : '';
-                row.appendChild(cell);
-            }
-            tbody.appendChild(row);
         }
-        console.log(`Successfully processed ${lines.length -1} potential data lines from ${csvFilename}`);
+        // --- End of loadCsvData Function ---
 
-    } catch (error) {
-        console.error(`Error loading or parsing CSV (${csvFilename}):`, error);
-        tbody.innerHTML = ''; // Clear table body on error
-        errorContainer.innerHTML = `<p class="error-message">Error loading stats (${csvFilename}): ${error.message}</p>`;
-    }
-}
-
-        // Run the function when the page content is loaded
+        // --- Updated Call to loadCsvData ---
         document.addEventListener('DOMContentLoaded', () => {
-            loadCsvData('batting stats.csv', 'batting-tbody', 'error-container', 15); // 15 = number of columns in batting table
+            loadCsvData('batting stats.csv', 'batting-thead', 'batting-tbody', 'error-container');
         });
     </script>
 
