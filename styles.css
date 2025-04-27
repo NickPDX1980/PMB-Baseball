@@ -16,13 +16,24 @@ a:hover { text-decoration: underline; }
 }
 
 table {
-    width: 100%; min-width: 600px; border-collapse: separate; border-spacing: 0;
+    width: 100%;
+    /* min-width: 600px; */ /* Min-width on table less critical with fixed layout */
+    border-collapse: separate;
+    border-spacing: 0;
+    /* --- Use fixed layout to enforce widths --- */
+    table-layout: fixed;
 }
 
 th, td {
     border-bottom: 1px solid #ccc; border-right: 1px solid #ccc;
-    padding: 8px; text-align: left; vertical-align: top;
+    padding: 8px;
+    text-align: left; vertical-align: top;
     white-space: nowrap; background-color: #ffffff;
+    /* --- Add default min-width and overflow handling for fixed layout --- */
+    min-width: 80px; /* Default minimum width for cols 4+ (ADJUST AS NEEDED) */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* --- End default handling --- */
 }
 th:first-child, td:first-child { border-left: 1px solid #ccc; }
 thead tr:first-child th { border-top: 1px solid #ccc; }
@@ -32,12 +43,13 @@ tfoot tr:first-child td { border-top: 1px solid #ccc; }
 th { background-color: #f2f2f2; position: sticky; top: 0; z-index: 2; cursor: pointer; user-select: none; }
 th:hover { background-color: #e0e0e0; }
 
-/* --- Define Widths for First 3 Columns (adjust as needed) --- */
+/* --- Define Specific Widths for First 3 Columns (Overrides default min-width) --- */
+/* !! ADJUST THESE WIDTHS AND THE CORRESPONDING 'left' VALUES BELOW !! */
 /* Column 0 (Collapses, e.g., Player Name) */
 th:nth-child(1), td:nth-child(1) {
-    width: 150px; /* ADJUST WIDTH */ min-width: 150px;
+    width: 150px; /* ADJUST WIDTH */ min-width: 150px; /* Explicit min-width too */
     padding-left: 4px; padding-right: 4px;
-    overflow: hidden; text-overflow: ellipsis; /* Enforce width for initial view */
+    /* overflow settings inherited from general rule */
 }
 /* Column 1 (Collapses, first letter only) */
 th:nth-child(2), td:nth-child(2) {
@@ -48,7 +60,7 @@ th:nth-child(2), td:nth-child(2) {
 th:nth-child(3), td:nth-child(3) {
     width: 50px; /* ADJUST WIDTH */ min-width: 50px;
     padding-left: 4px; padding-right: 4px;
-    /* --- THIS COLUMN IS NOW STICKY --- */
+    /* --- THIS COLUMN IS STICKY --- */
     position: sticky;
     left: 0; /* Sticks to the far left */
     z-index: 3; /* Above scrolling content */
@@ -56,16 +68,9 @@ th:nth-child(3), td:nth-child(3) {
 }
 
 /* --- Ensure Sticky Column 2 (:nth-child(3)) has correct background --- */
-/* Header cell for Column 2 */
-thead th:nth-child(3) {
-    background-color: #f2f2f2; /* Match header background */
-    z-index: 4; /* Above sticky header */
-}
-/* Footer cell for Column 2 */
-tfoot td:nth-child(3) {
-    background-color: #fafafa; /* Match footer background */
-}
-/* REMOVED sticky rules for :nth-child(1) and :nth-child(2) */
+thead th:nth-child(3) { background-color: #f2f2f2; z-index: 4; }
+tfoot td:nth-child(3) { background-color: #fafafa; }
+
 
 /* --- Footer Styling --- */
 tfoot td { font-weight: bold; background-color: #fafafa; }
