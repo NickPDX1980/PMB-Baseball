@@ -25,124 +25,81 @@
     <a href="index.html" class="nav-link">&laquo; Back to Home</a>
 
     <script>
-        // --- Header Definitions ---
-        const headerDefs = { "NUMBER": "#", "#": "Number", "GP": "Games Played", "PA": "Plate Appearances", "AB": "At Bats", "R": "Runs Scored", "H": "Hits", "1B": "Singles", "2B": "Doubles", "3B": "Triples", "HR": "Home Runs", "RBI": "Runs Batted In", "BB": "Base on Balls (Walks)", "SO": "Strikeouts", "K": "Strikeouts", "SB": "Stolen Bases", "CS": "Caught Stealing", "AVG": "Batting Average (H/AB)", "OBP": "On-Base Percentage", "SLG": "Slugging Percentage", "OPS": "On-Base Plus Slugging" /* Add more */ };
-        // --- PASTE stripQuotes function here ---
+        // --- Debounce Utility ---
+        function debounce(func, wait) { let timeout; return function executedFunction(...args) { const later = () => { clearTimeout(timeout); func(...args); }; clearTimeout(timeout); timeout = setTimeout(later, wait); }; }
+        // --- Helper function to remove quotes ---
         function stripQuotes(str) { if (typeof str !== 'string') return str; const trimmed = str.trim(); if (trimmed.length >= 2 && trimmed.startsWith('"') && trimmed.endsWith('"')) { return trimmed.substring(1, trimmed.length - 1); } return trimmed; }
-        // --- PASTE sortTable function here ---
-        function sortTable(columnIndex, tbodyId, clickedThElement) { const tbody = document.getElementById(tbodyId); const rowsArray = Array.from(tbody.querySelectorAll('tr')); if (rowsArray.length <= 1) return; const currentDirection = clickedThElement.dataset.sortDirection || 'none'; let newDirection = (currentDirection === 'ascending') ? 'descending' : 'ascending'; const allHeaders = clickedThElement.closest('thead').querySelectorAll('th'); allHeaders.forEach(th => { if (th !== clickedThElement) { delete th.dataset.sortDirection; th.classList.remove('sort-asc', 'sort-desc'); } }); clickedThElement.dataset.sortDirection = newDirection; clickedThElement.classList.remove('sort-asc', 'sort-desc'); clickedThElement.classList.add(newDirection === 'ascending' ? 'sort-asc' : 'sort-desc'); const firstDataCell = rowsArray[0]?.querySelectorAll('td')[columnIndex]; const rawSampleValue = firstDataCell ? firstDataCell.textContent : ''; const sampleValue = stripQuotes(rawSampleValue); const isNumeric = sampleValue !== '' && !isNaN(parseFloat(sampleValue)); console.log(`Sorting column ${columnIndex} as ${isNumeric ? 'Numeric' : 'Text'}`); rowsArray.sort((rowA, rowB) => { const cellA = rowA.querySelectorAll('td')[columnIndex]; const cellB = rowB.querySelectorAll('td')[columnIndex]; const valueA = stripQuotes(cellA ? cellA.textContent : ''); const valueB = stripQuotes(cellB ? cellB.textContent : ''); let comparison = 0; if (isNumeric) { const numA = parseFloat(valueA); const numB = parseFloat(valueB); if (isNaN(numA) && isNaN(numB)) comparison = 0; else if (isNaN(numA)) comparison = 1; else if (isNaN(numB)) comparison = -1; else comparison = numA - numB; } else { comparison = valueA.localeCompare(valueB); } return (newDirection === 'ascending') ? comparison : (comparison * -1); }); const fragment = document.createDocumentFragment(); rowsArray.forEach(row => fragment.appendChild(row)); tbody.innerHTML = ''; tbody.appendChild(fragment); console.log(`Table sorted by column ${columnIndex}, direction: ${newDirection}`); }
+        // --- Sorting Function ---
+        function sortTable(columnIndex, tbodyId, clickedThElement) { const tbody = document.getElementById(tbodyId); const rowsArray = Array.from(tbody.querySelectorAll('tr')); if (rowsArray.length <= 1) return; const currentDirection = clickedThElement.dataset.sortDirection || 'none'; let newDirection = (currentDirection === 'ascending') ? 'descending' : 'ascending'; const allHeaders = clickedThElement.closest('thead').querySelectorAll('th'); allHeaders.forEach(th => { if (th !== clickedThElement) { delete th.dataset.sortDirection; th.classList.remove('sort-asc', 'sort-desc'); } }); clickedThElement.dataset.sortDirection = newDirection; clickedThElement.classList.remove('sort-asc', 'sort-desc'); clickedThElement.classList.add(newDirection === 'ascending' ? 'sort-asc' : 'sort-desc'); const firstDataCell = rowsArray[0]?.querySelectorAll('td')[columnIndex]; const rawSampleValue = firstDataCell ? (columnIndex === 1 ? firstDataCell.dataset.originalValue : firstDataCell.textContent) : ''; const sampleValue = stripQuotes(rawSampleValue); const isNumeric = (columnIndex !== 1) && sampleValue !== '' && !isNaN(parseFloat(sampleValue)); console.log(`Sorting column ${columnIndex} as ${isNumeric ? 'Numeric' : 'Text'}`); rowsArray.sort((rowA, rowB) => { const cellA = rowA.querySelectorAll('td')[columnIndex]; const cellB = rowB.querySelectorAll('td')[columnIndex]; let comparison = 0; let valueA, valueB; if (columnIndex === 1) { valueA = cellA ? cellA.dataset.originalValue || '' : ''; valueB = cellB ? cellB.dataset.originalValue || '' : ''; comparison = valueA.localeCompare(valueB); } else { valueA = stripQuotes(cellA ? cellA.textContent : ''); valueB = stripQuotes(cellB ? cellB.textContent : ''); if (isNumeric) { const numA = parseFloat(valueA); const numB = parseFloat(valueB); if (isNaN(numA) && isNaN(numB)) comparison = 0; else if (isNaN(numA)) comparison = 1; else if (isNaN(numB)) comparison = -1; else comparison = numA - numB; } else { comparison = valueA.localeCompare(valueB); } } return (newDirection === 'ascending') ? comparison : (comparison * -1); }); const fragment = document.createDocumentFragment(); rowsArray.forEach(row => fragment.appendChild(row)); tbody.innerHTML = ''; tbody.appendChild(fragment); console.log(`Table sorted by column ${columnIndex}, direction: ${newDirection}`); }
 
-        // --- Load CSV Data Function (UPDATED for # replacement and Key) ---
-        async function loadCsvData(csvFilename, theadId, tbodyId, tfootId, errorContainerId, keyContainerId) {
-            const thead = document.getElementById(theadId);
-            const tbody = document.getElementById(tbodyId);
-            const tfoot = document.getElementById(tfootId);
-            const errorContainer = document.getElementById(errorContainerId);
-            const keyContainer = document.getElementById(keyContainerId);
+        // --- Sticky Column Collapse Function (Targets cols 0 & 1) ---
+        function setupStickyColumnCollapse(containerSelector) {
+            const container = document.querySelector(containerSelector);
+            if (!container) return;
 
-            thead.innerHTML = ''; tbody.innerHTML = '<tr><td>Loading stats...</td></tr>'; tfoot.innerHTML = ''; errorContainer.innerHTML = ''; keyContainer.innerHTML = '';
+            // Store references to cells for columns 0 and 1 (indices 0 and 1)
+            let col0Cells = []; // Index 0 = 1st column (collapses)
+            let col1Cells = []; // Index 1 = 2nd column (collapses)
+            const collapseThreshold = 10; // Pixels scrolled to trigger collapse
 
-            try {
-                const response = await fetch(csvFilename);
-                if (!response.ok) throw new Error(`Network error: ${response.statusText} (${response.status})`);
-                const csvData = await response.text();
-                const lines = csvData.trim().split(/\r?\n/);
-                if (lines.length < 2) { tbody.innerHTML = '<tr><td>CSV file empty or missing headers/data.</td></tr>'; return; }
-
-                // --- Process Header Row ---
-                const headerValues = lines[0].split(',');
-                const numColumns = headerValues.length;
-                const headerRow = document.createElement('tr');
-
-                headerValues.forEach((headerText, index) => {
-                    const th = document.createElement('th');
-                    let cleanHeaderText = stripQuotes(headerText); // Original cleaned text from CSV
-                    let displayHeaderText = cleanHeaderText; // Text to actually display in <th>
-
-                    // --- Replace 'Number' with '#' for the first column (case-insensitive) ---
-                    if (index === 0 && cleanHeaderText.toLowerCase() === 'number') {
-                        displayHeaderText = '#';
-                    }
-                    // --- End Replacement ---
-
-                    th.textContent = displayHeaderText; // Set display text
-                    th.dataset.columnIndex = index;
-                    th.dataset.originalHeader = cleanHeaderText; // Store original for definition lookup
-
-                    const definition = headerDefs[cleanHeaderText.toUpperCase()]; // Use original cleaned text for lookup
-                    if (definition) {
-                        th.title = definition; // Tooltip shows full definition
-                    } else {
-                        th.title = `Click to sort by ${cleanHeaderText}`; // Fallback title
-                        console.warn(`No definition found for header: ${cleanHeaderText}`);
-                    }
-
-                    th.addEventListener('click', (event) => { sortTable(index, tbodyId, event.currentTarget); });
-                    headerRow.appendChild(th);
-                });
-                thead.appendChild(headerRow);
-                console.log(`Processed header: ${numColumns} columns.`);
-
-                // --- Process Data Rows (excluding last 2) ---
-                tbody.innerHTML = '';
-                const dataEndIndex = lines.length - 2;
-                let dataRowsProcessed = 0;
-                if (dataEndIndex >= 1) {
-                    for (let i = 1; i < dataEndIndex; i++) {
-                        if (lines[i].trim() === '') continue;
-                        const dataValues = lines[i].split(',');
-                        const dataRow = document.createElement('tr');
-                        for (let j = 0; j < numColumns; j++) {
-                            const td = document.createElement('td');
-                            td.textContent = stripQuotes(dataValues[j]);
-                            dataRow.appendChild(td);
-                        }
-                        tbody.appendChild(dataRow);
-                        dataRowsProcessed++;
-                    }
-                }
-                console.log(`Processed ${dataRowsProcessed} data rows into tbody.`);
-
-                // --- Process Footer Rows (Last 2 lines) ---
-                if (lines.length >= dataEndIndex) {
-                    for (let i = Math.max(1, dataEndIndex); i < lines.length; i++) {
-                        if (lines[i].trim() === '') {
-                            const blankRow = document.createElement('tr'); const blankTd = document.createElement('td'); blankTd.colSpan = numColumns; blankTd.innerHTML = '&nbsp;'; blankRow.appendChild(blankTd); tfoot.appendChild(blankRow); continue;
-                        }
-                        const footerValues = lines[i].split(','); const footerRow = document.createElement('tr');
-                        for (let j = 0; j < numColumns; j++) { const td = document.createElement('td'); td.textContent = stripQuotes(footerValues[j]); footerRow.appendChild(td); }
-                        tfoot.appendChild(footerRow);
-                    }
-                    console.log(`Processed remaining ${lines.length - Math.max(1, dataEndIndex)} lines into tfoot.`);
-                }
-
-                // --- Build and Add Header Key ---
-                const keyList = document.createElement('ul');
-                thead.querySelectorAll('th').forEach(th => { // Iterate through the created TH elements
-                    const headerLabel = th.textContent; // Text displayed in header (e.g., '#')
-                    const originalHeader = th.dataset.originalHeader; // Original text from CSV (e.g., 'Number')
-                    const definition = headerDefs[originalHeader.toUpperCase()]; // Lookup using original text
-
-                    if (definition) {
-                        const keyItem = document.createElement('li');
-                        // Show the label from the header, and the definition looked up using original
-                        keyItem.innerHTML = `<strong>${headerLabel}:</strong> ${definition}`;
-                        keyList.appendChild(keyItem);
-                    }
-                });
-                if (keyList.children.length > 0) {
-                    const keyTitle = document.createElement('h2'); keyTitle.textContent = 'Header Key';
-                    keyContainer.appendChild(keyTitle); keyContainer.appendChild(keyList);
-                }
-                // --- End Build Key ---
-
-            } catch (error) {
-                console.error(`Error loading/parsing CSV (${csvFilename}):`, error);
-                thead.innerHTML = ''; tbody.innerHTML = ''; tfoot.innerHTML = ''; keyContainer.innerHTML = '';
-                errorContainer.innerHTML = `<p class="error-message">Error loading stats: ${error.message}</p>`;
+            // Function to get references to cells
+            function initializeCollapse() {
+                col0Cells = Array.from(container.querySelectorAll('th:nth-child(1), td:nth-child(1)'));
+                col1Cells = Array.from(container.querySelectorAll('th:nth-child(2), td:nth-child(2)'));
+                 // No need to query column 2 (index 2 / :nth-child(3))
+                console.log(`Collapse initialized. Found ${col0Cells.length} cells for Col0.`);
             }
+
+            // The actual logic run on scroll (debounced)
+            const handleScroll = debounce(() => {
+                 // Check if cells have been queried
+                if (col0Cells.length === 0 && col1Cells.length === 0) return;
+
+                const scrollLeft = container.scrollLeft;
+
+                // Collapse columns 0 & 1 if scrolled past threshold
+                if (scrollLeft > collapseThreshold) {
+                    col0Cells.forEach(cell => cell.classList.add('collapsed'));
+                    col1Cells.forEach(cell => cell.classList.add('collapsed'));
+                } else {
+                    // Show columns 0 & 1 if not scrolled past threshold
+                    col0Cells.forEach(cell => cell.classList.remove('collapsed'));
+                    col1Cells.forEach(cell => cell.classList.remove('collapsed'));
+                }
+            }, 50); // Debounce wait time in ms
+
+            // Initial setup and attach listener
+            initializeCollapse();
+            container.addEventListener('scroll', handleScroll);
+            window.addEventListener('resize', debounce(initializeCollapse, 200));
         }
 
+
+        // --- Load CSV Data Function ---
+        async function loadCsvData(csvFilename, theadId, tbodyId, tfootId, errorContainerId, keyContainerId) {
+            const thead = document.getElementById(theadId); const tbody = document.getElementById(tbodyId); const tfoot = document.getElementById(tfootId); const errorContainer = document.getElementById(errorContainerId); const keyContainer = document.getElementById(keyContainerId);
+            thead.innerHTML = ''; tbody.innerHTML = '<tr><td>Loading stats...</td></tr>'; tfoot.innerHTML = ''; errorContainer.innerHTML = ''; keyContainer.innerHTML = '';
+            // --- !! CUSTOMIZE headerDefs FOR BATTING !! ---
+            const headerDefs = { "NUMBER": "#", "#": "Number", "PLAYER NAME": "Player Name", "FIRST NAME": "First Name", "LAST NAME": "Last Name", "POS": "Position", "GP": "Games Played", "PA": "Plate Appearances", "AB": "At Bats", "R": "Runs Scored", "H": "Hits", "1B": "Singles", "2B": "Doubles", "3B": "Triples", "HR": "Home Runs", "RBI": "Runs Batted In", "BB": "Base on Balls (Walks)", "SO": "Strikeouts", "K": "Strikeouts", "SB": "Stolen Bases", "CS": "Caught Stealing", "AVG": "Batting Average (H/AB)", "OBP": "On-Base Percentage", "SLG": "Slugging Percentage", "OPS": "On-Base Plus Slugging" /* Add more */ };
+            try {
+                const response = await fetch(csvFilename); if (!response.ok) throw new Error(`Network error: ${response.statusText} (${response.status})`);
+                const csvData = await response.text(); const lines = csvData.trim().split(/\r?\n/); if (lines.length < 2) { tbody.innerHTML = '<tr><td>CSV file empty or missing headers/data.</td></tr>'; return; }
+                // Process Header
+                const headerValues = lines[0].split(','); const numColumns = headerValues.length; const headerRow = document.createElement('tr');
+                headerValues.forEach((headerText, index) => { const th = document.createElement('th'); let cleanHeaderText = stripQuotes(headerText); let displayHeaderText = cleanHeaderText; if (index === 0 && cleanHeaderText.toLowerCase() === 'number') { displayHeaderText = '#'; } if (index === 1) { displayHeaderText = cleanHeaderText.length > 0 ? cleanHeaderText[0] : ''; } th.textContent = displayHeaderText; th.dataset.columnIndex = index; th.dataset.originalHeader = cleanHeaderText; const definition = headerDefs[cleanHeaderText.toUpperCase()]; if (definition) { th.title = definition; } else { th.title = `Click to sort by ${cleanHeaderText}`; console.warn(`No definition found for header: ${cleanHeaderText}`); } th.addEventListener('click', (event) => { sortTable(index, tbodyId, event.currentTarget); }); headerRow.appendChild(th); });
+                thead.appendChild(headerRow);
+                // Process Data
+                tbody.innerHTML = ''; const dataEndIndex = lines.length - 2;
+                if (dataEndIndex >= 1) { for (let i = 1; i < dataEndIndex; i++) { if (lines[i].trim() === '') continue; const dataValues = lines[i].split(','); const dataRow = document.createElement('tr'); for (let j = 0; j < numColumns; j++) { const td = document.createElement('td'); const fullValue = stripQuotes(dataValues[j]); if (j === 1) { td.textContent = fullValue.length > 0 ? fullValue[0] : ''; td.dataset.originalValue = fullValue; } else { td.textContent = fullValue; } dataRow.appendChild(td); } tbody.appendChild(dataRow); } }
+                // Process Footer
+                if (lines.length >= dataEndIndex) { for (let i = Math.max(1, dataEndIndex); i < lines.length; i++) { if (lines[i].trim() === '') { const blankRow = document.createElement('tr'); const blankTd = document.createElement('td'); blankTd.colSpan = numColumns; blankTd.innerHTML = '&nbsp;'; blankRow.appendChild(blankTd); tfoot.appendChild(blankRow); continue; } const footerValues = lines[i].split(','); const footerRow = document.createElement('tr'); for (let j = 0; j < numColumns; j++) { const td = document.createElement('td'); const fullValue = stripQuotes(footerValues[j]); if (j === 1) { td.textContent = fullValue.length > 0 ? fullValue[0] : ''; td.dataset.originalValue = fullValue; } else { td.textContent = fullValue; } footerRow.appendChild(td); } tfoot.appendChild(footerRow); } }
+                // Build Key
+                const keyList = document.createElement('ul'); thead.querySelectorAll('th').forEach(th => { const headerLabel = th.textContent; const originalHeader = th.dataset.originalHeader; const definition = headerDefs[originalHeader.toUpperCase()]; if (definition) { const keyItem = document.createElement('li'); keyItem.innerHTML = `<strong>${headerLabel}:</strong> ${definition}`; keyList.appendChild(keyItem); } });
+                if (keyList.children.length > 0) { const keyTitle = document.createElement('h2'); keyTitle.textContent = 'Header Key'; keyContainer.appendChild(keyTitle); keyContainer.appendChild(keyList); }
+                // Setup Collapse
+                setTimeout(() => { setupStickyColumnCollapse('.table-container'); }, 0);
+            } catch (error) { console.error(`Error loading/parsing CSV (${csvFilename}):`, error); thead.innerHTML = ''; tbody.innerHTML = ''; tfoot.innerHTML = ''; keyContainer.innerHTML = ''; errorContainer.innerHTML = `<p class="error-message">Error loading stats: ${error.message}</p>`; }
+        }
         // --- Initial Load Trigger ---
         document.addEventListener('DOMContentLoaded', () => {
             loadCsvData('batting stats.csv', 'batting-thead', 'batting-tbody', 'batting-tfoot', 'error-container', 'header-key-container');
