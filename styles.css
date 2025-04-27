@@ -11,7 +11,20 @@ ul { list-style: none; padding: 0; }
 li { margin-bottom: 10px; }
 a { text-decoration: none; color: #0000CD; }
 a:hover { text-decoration: underline; }
-.nav-link { display: block; margin-top: 20px; }
+
+/* --- Navigation Links --- */
+.nav-link { /* Style for the link at the BOTTOM */
+    display: block;
+    margin-top: 20px;
+}
+.nav-link-top { /* Style for the link at the TOP */
+    display: block; /* Make it block level */
+    margin-bottom: 15px; /* Add space below it */
+    font-size: 0.9em; /* Slightly smaller */
+}
+/* --- End Navigation Links --- */
+
+
 .error-message { color: red; font-weight: bold; margin-top: 15px; }
 
 /* --- Styles for Table, Scrolling, and Sticky Panes --- */
@@ -84,36 +97,18 @@ tfoot td:nth-child(1), tfoot td:nth-child(2), tfoot td:nth-child(3) {
 .sort-asc::after { content: ' ▲'; font-size: 0.8em; }
 .sort-desc::after { content: ' ▼'; font-size: 0.8em; }
 
-/* --- Header Key Styling (UPDATED) --- */
+/* --- Header Key Styling --- */
 #header-key-container {
     margin-top: 30px;
     padding-top: 15px;
     border-top: 1px solid #ccc;
 }
-#header-key-container h2 {
-    margin-bottom: 10px;
-}
+#header-key-container h2 { margin-bottom: 10px; }
 #header-key-container ul {
-    list-style: none;
-    padding: 0;
-    /* --- Adjust columns --- */
-    column-count: 3; /* Try 3 columns by default */
-    column-gap: 25px; /* Adjust gap slightly */
+    list-style: none; padding: 0; column-count: 3; column-gap: 25px;
 }
 #header-key-container li {
-    margin-bottom: 5px; /* Slightly reduce bottom margin */
-    /* --- Make font smaller --- */
-    font-size: 0.85em; /* Adjust value as needed (e.g., 12px, 0.8em) */
-    break-inside: avoid-column; /* Try to prevent list items from breaking across columns */
+    margin-bottom: 5px; font-size: 0.85em; break-inside: avoid-column;
 }
-/* Responsive adjustments for columns */
-@media (max-width: 768px) { /* Apply 2 columns on medium screens */
-    #header-key-container ul {
-        column-count: 2;
-    }
-}
-@media (max-width: 480px) { /* Apply 1 column on small screens */
-    #header-key-container ul {
-        column-count: 1;
-    }
-}
+@media (max-width: 768px) { #header-key-container ul { column-count: 2; } }
+@media (max-width: 480px) { #header-key-container ul { column-count: 1; } }
