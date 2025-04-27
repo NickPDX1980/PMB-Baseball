@@ -15,43 +15,36 @@
             <thead id="batting-thead">
                 </thead>
             <tbody id="batting-tbody">
-                <tr><td>Loading stats...</td></tr> </tbody>
+                <tr><td>Loading stats...</td></tr>
+            </tbody>
+            <tfoot id="batting-tfoot">
+                </tfoot>
         </table>
     </div>
-    <div id="error-container"></div> <a href="index.html" class="nav-link">&laquo; Back to Home</a>
+    <div id="error-container"></div>
+
+    <a href="index.html" class="nav-link">&laquo; Back to Home</a>
 
     <script>
         // --- Helper function to remove leading/trailing quotes ---
         function stripQuotes(str) {
             if (typeof str !== 'string') return str;
             const trimmed = str.trim();
-            // Check if it starts and ends with a double quote
             if (trimmed.length >= 2 && trimmed.startsWith('"') && trimmed.endsWith('"')) {
-                // Slice the string to remove the first and last characters
                 return trimmed.substring(1, trimmed.length - 1);
             }
-            // Return the original trimmed string if no surrounding quotes found
             return trimmed;
         }
-        // --- End of Helper Function ---
 
-
-        // --- Sorting Function (UPDATED) ---
+        // --- Sorting Function (targets tbody only) ---
         function sortTable(columnIndex, tbodyId, clickedThElement) {
-            const tbody = document.getElementById(tbodyId);
-            const rowsArray = Array.from(tbody.querySelectorAll('tr'));
-            if (rowsArray.length <= 1) return; // No rows to sort
+            const tbody = document.getElementById(tbodyId); // Sort ONLY the body
+            const rowsArray = Array.from(tbody.querySelectorAll('tr')); // Get only body rows
+            if (rowsArray.length <= 1) return;
 
-            // Determine sort direction
             const currentDirection = clickedThElement.dataset.sortDirection || 'none';
-            let newDirection;
-            if (currentDirection === 'ascending') {
-                newDirection = 'descending';
-            } else {
-                newDirection = 'ascending';
-            }
+            let newDirection = (currentDirection === 'ascending') ? 'descending' : 'ascending';
 
-            // Reset other headers' visual indicators
             const allHeaders = clickedThElement.closest('thead').querySelectorAll('th');
             allHeaders.forEach(th => {
                 if (th !== clickedThElement) {
@@ -60,151 +53,139 @@
                 }
             });
 
-            // Set new direction and visual indicator for clicked header
             clickedThElement.dataset.sortDirection = newDirection;
             clickedThElement.classList.remove('sort-asc', 'sort-desc');
             clickedThElement.classList.add(newDirection === 'ascending' ? 'sort-asc' : 'sort-desc');
 
-
-            // --- Revised Data Type Detection (using stripped value) ---
             const firstDataCell = rowsArray[0]?.querySelectorAll('td')[columnIndex];
             const rawSampleValue = firstDataCell ? firstDataCell.textContent : '';
-            const sampleValue = stripQuotes(rawSampleValue); // Use helper here too
+            const sampleValue = stripQuotes(rawSampleValue);
             const isNumeric = sampleValue !== '' && !isNaN(parseFloat(sampleValue));
-            console.log(`Sorting column ${columnIndex}. Sample (stripped): "${sampleValue}". Type: ${isNumeric ? 'Numeric' : 'Text'}`);
-            // --- End Revised Detection ---
+            console.log(`Sorting column ${columnIndex} as ${isNumeric ? 'Numeric' : 'Text'}`);
 
-            // Sort the array
             rowsArray.sort((rowA, rowB) => {
                 const cellA = rowA.querySelectorAll('td')[columnIndex];
                 const cellB = rowB.querySelectorAll('td')[columnIndex];
-
-                // --- Strip quotes from values before comparing ---
                 const valueA = stripQuotes(cellA ? cellA.textContent : '');
                 const valueB = stripQuotes(cellB ? cellB.textContent : '');
-                // --- End Strip Quotes ---
-
                 let comparison = 0;
-
                 if (isNumeric) {
-                    // Numeric comparison (handle NaN values consistently)
-                    const numA = parseFloat(valueA);
-                    const numB = parseFloat(valueB);
-
-                    if (isNaN(numA) && isNaN(numB)) comparison = 0; // Both NaN, treat as equal
-                    else if (isNaN(numA)) comparison = 1; // Put NaN after numbers
-                    else if (isNaN(numB)) comparison = -1; // Put NaN after numbers
-                    else comparison = numA - numB; // Proper numeric comparison
-                } else {
-                    // Text comparison
-                    comparison = valueA.localeCompare(valueB);
-                }
-
-                // Apply direction
+                    const numA = parseFloat(valueA); const numB = parseFloat(valueB);
+                    if (isNaN(numA) && isNaN(numB)) comparison = 0;
+                    else if (isNaN(numA)) comparison = 1; else if (isNaN(numB)) comparison = -1;
+                    else comparison = numA - numB;
+                } else { comparison = valueA.localeCompare(valueB); }
                 return (newDirection === 'ascending') ? comparison : (comparison * -1);
             });
 
-            // Re-populate the table body with sorted rows
             const fragment = document.createDocumentFragment();
-            rowsArray.forEach(row => {
-                fragment.appendChild(row);
-            });
-            tbody.innerHTML = '';
-            tbody.appendChild(fragment);
-
+            rowsArray.forEach(row => fragment.appendChild(row));
+            tbody.innerHTML = ''; // Clear only the TBODY
+            tbody.appendChild(fragment); // Append sorted rows back to TBODY
             console.log(`Table sorted by column ${columnIndex}, direction: ${newDirection}`);
         }
-        // --- End of Sorting Function ---
 
 
-        // --- Load CSV Data Function (UPDATED) ---
-        async function loadCsvData(csvFilename, theadId, tbodyId, errorContainerId) {
+        // --- Load CSV Data Function (UPDATED to handle tfoot) ---
+        async function loadCsvData(csvFilename, theadId, tbodyId, tfootId, errorContainerId) { // Added tfootId
             const thead = document.getElementById(theadId);
             const tbody = document.getElementById(tbodyId);
+            const tfoot = document.getElementById(tfootId); // Get footer element
             const errorContainer = document.getElementById(errorContainerId);
 
+            // Clear previous content
             thead.innerHTML = '';
             tbody.innerHTML = '<tr><td>Loading stats...</td></tr>';
+            tfoot.innerHTML = ''; // Clear footer too
             errorContainer.innerHTML = '';
 
             try {
                 console.log(`Workspaceing: ${csvFilename}`);
                 const response = await fetch(csvFilename);
-                console.log(`Workspace response status for ${csvFilename}: ${response.status}`);
-
-                if (!response.ok) {
-                    throw new Error(`Network response was not ok: ${response.statusText} (Status: ${response.status}).`);
-                }
+                if (!response.ok) throw new Error(`Network error: ${response.statusText} (${response.status})`);
 
                 const csvData = await response.text();
                 const lines = csvData.trim().split(/\r?\n/);
-                console.log(`Number of lines found after split for ${csvFilename}: ${lines.length}`);
+                console.log(`Lines found: ${lines.length}`);
 
-                if (lines.length < 1 || lines[0].trim() === '') {
-                    tbody.innerHTML = '<tr><td>CSV file appears to be empty or missing headers.</td></tr>';
+                if (lines.length < 2) { // Need at least header and one data/footer row
+                    tbody.innerHTML = '<tr><td>CSV file empty or missing headers/data.</td></tr>';
                     return;
                 }
 
-                // --- Process Header Row (lines[0]) ---
+                // --- Process Header (lines[0]) ---
                 const headerValues = lines[0].split(',');
                 const numColumns = headerValues.length;
                 const headerRow = document.createElement('tr');
-
                 headerValues.forEach((headerText, index) => {
                     const th = document.createElement('th');
-                    // --- Use stripQuotes for header text ---
                     const cleanHeaderText = stripQuotes(headerText);
                     th.textContent = cleanHeaderText;
                     th.dataset.columnIndex = index;
-                    th.title = `Click to sort by ${cleanHeaderText}`; // Use cleaned text for title
-                    // --- End Use stripQuotes ---
-
+                    th.title = `Click to sort by ${cleanHeaderText}`;
                     th.addEventListener('click', (event) => {
-                         const clickedHeader = event.currentTarget;
-                         console.log(`Clicked header: ${cleanHeaderText}, Column index: ${index}`);
-                         sortTable(index, tbodyId, clickedHeader);
+                         sortTable(index, tbodyId, event.currentTarget); // Pass tbodyId
                     });
                     headerRow.appendChild(th);
                 });
                 thead.appendChild(headerRow);
-                console.log(`Processed header with ${numColumns} columns.`);
+                console.log(`Processed header: ${numColumns} columns.`);
 
-                // --- Process Data Rows (lines[1] onwards) ---
+                // --- Process Data Rows (excluding last 2 potential footer rows) ---
                 tbody.innerHTML = ''; // Clear "Loading..."
-
-                if (lines.length <= 1) {
-                     tbody.innerHTML = `<tr><td colspan="${numColumns}">No data rows found below the header.</td></tr>`;
-                     return;
-                }
-
-                for (let i = 1; i < lines.length; i++) {
-                    if (lines[i].trim() === '') continue;
-                    const dataValues = lines[i].split(',');
-                    const dataRow = document.createElement('tr');
-
-                    for (let j = 0; j < numColumns; j++) {
-                        const td = document.createElement('td');
-                        // --- Use stripQuotes for data cell text ---
-                        td.textContent = stripQuotes(dataValues[j]); // Use helper here
-                        // --- End Use stripQuotes ---
-                        dataRow.appendChild(td);
+                const dataEndIndex = lines.length - 2; // Index before the last two rows
+                let dataRowsProcessed = 0;
+                if (dataEndIndex >= 1) { // Check if there are any data rows before the last two
+                    for (let i = 1; i < dataEndIndex; i++) { // Loop up to index BEFORE last two
+                        if (lines[i].trim() === '') continue;
+                        const dataValues = lines[i].split(',');
+                        const dataRow = document.createElement('tr');
+                        for (let j = 0; j < numColumns; j++) {
+                            const td = document.createElement('td');
+                            td.textContent = stripQuotes(dataValues[j]);
+                            dataRow.appendChild(td);
+                        }
+                        tbody.appendChild(dataRow);
+                        dataRowsProcessed++;
                     }
-                    tbody.appendChild(dataRow);
                 }
-                console.log(`Successfully processed ${lines.length - 1} data lines.`);
+                console.log(`Processed ${dataRowsProcessed} data rows into tbody.`);
+
+                // --- Process Footer Rows (Last 2 lines) ---
+                if (lines.length >= dataEndIndex) { // Ensure the lines exist
+                   for (let i = Math.max(1, dataEndIndex); i < lines.length; i++) { // Process last two (or fewer if only 1 data row exists)
+                        if (lines[i].trim() === '') { // Handle potentially blank row
+                            const blankRow = document.createElement('tr');
+                            const blankTd = document.createElement('td');
+                            blankTd.colSpan = numColumns; // Make it span the table width
+                            blankTd.innerHTML = '&nbsp;'; // Non-breaking space
+                            blankRow.appendChild(blankTd);
+                            tfoot.appendChild(blankRow);
+                            continue;
+                        }
+                        const footerValues = lines[i].split(',');
+                        const footerRow = document.createElement('tr');
+                        for (let j = 0; j < numColumns; j++) {
+                            const td = document.createElement('td');
+                            td.textContent = stripQuotes(footerValues[j]);
+                            footerRow.appendChild(td);
+                        }
+                        tfoot.appendChild(footerRow);
+                   }
+                   console.log(`Processed remaining ${lines.length - Math.max(1, dataEndIndex)} lines into tfoot.`);
+                }
+
 
             } catch (error) {
-                console.error(`Error loading or parsing CSV (${csvFilename}):`, error);
-                tbody.innerHTML = '';
-                thead.innerHTML = '';
+                console.error(`Error loading/parsing CSV (${csvFilename}):`, error);
+                thead.innerHTML = ''; tbody.innerHTML = ''; tfoot.innerHTML = ''; // Clear all parts
                 errorContainer.innerHTML = `<p class="error-message">Error loading stats: ${error.message}</p>`;
             }
         }
-        // --- End of loadCsvData Function ---
 
-        // --- Initial Load Trigger ---
+        // --- Initial Load Trigger (UPDATED to include tfootId) ---
         document.addEventListener('DOMContentLoaded', () => {
-            loadCsvData('batting stats.csv', 'batting-thead', 'batting-tbody', 'error-container');
+            loadCsvData('batting stats.csv', 'batting-thead', 'batting-tbody', 'batting-tfoot', 'error-container');
         });
     </script>
 
