@@ -84,7 +84,7 @@ tfoot td:nth-child(1), tfoot td:nth-child(2), tfoot td:nth-child(3) {
 .sort-asc::after { content: ' ▲'; font-size: 0.8em; }
 .sort-desc::after { content: ' ▼'; font-size: 0.8em; }
 
-/* --- Header Key Styling --- */
+/* --- Header Key Styling (UPDATED) --- */
 #header-key-container {
     margin-top: 30px;
     padding-top: 15px;
@@ -96,15 +96,23 @@ tfoot td:nth-child(1), tfoot td:nth-child(2), tfoot td:nth-child(3) {
 #header-key-container ul {
     list-style: none;
     padding: 0;
-    column-count: 2; /* Display in columns if space allows */
-    column-gap: 20px;
+    /* --- Adjust columns --- */
+    column-count: 3; /* Try 3 columns by default */
+    column-gap: 25px; /* Adjust gap slightly */
 }
 #header-key-container li {
-    margin-bottom: 8px;
-    font-size: 0.9em;
+    margin-bottom: 5px; /* Slightly reduce bottom margin */
+    /* --- Make font smaller --- */
+    font-size: 0.85em; /* Adjust value as needed (e.g., 12px, 0.8em) */
+    break-inside: avoid-column; /* Try to prevent list items from breaking across columns */
 }
-/* Adjust column count for smaller screens if needed */
-@media (max-width: 600px) {
+/* Responsive adjustments for columns */
+@media (max-width: 768px) { /* Apply 2 columns on medium screens */
+    #header-key-container ul {
+        column-count: 2;
+    }
+}
+@media (max-width: 480px) { /* Apply 1 column on small screens */
     #header-key-container ul {
         column-count: 1;
     }
