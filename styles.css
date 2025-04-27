@@ -20,20 +20,17 @@ table {
     min-width: 600px;
     border-collapse: separate;
     border-spacing: 0;
-    /* --- ADD THIS LINE --- */
-    table-layout: fixed; /* Force browser to respect defined widths */
-    /* --- END ADDED LINE --- */
-    /* font-size: 0.95em; */ /* Optional */
+    /* table-layout: fixed; */ /* REMOVED THIS LINE */
+    /* font-size: 0.95em; */
 }
 
-/* (Rest of the CSS remains the same as the previous version...) */
 th, td {
     border-bottom: 1px solid #ccc; border-right: 1px solid #ccc;
-    padding: 8px; text-align: left; vertical-align: top;
+    padding: 8px;
+    text-align: left; vertical-align: top;
     white-space: nowrap; background-color: #ffffff;
-    /* Add overflow handling if fixed layout + nowrap causes issues */
-    overflow: hidden;
-    text-overflow: ellipsis;
+    /* overflow: hidden; */ /* REMOVED THIS LINE */
+    /* text-overflow: ellipsis; */ /* REMOVED THIS LINE */
 }
 th:first-child, td:first-child { border-left: 1px solid #ccc; }
 thead tr:first-child th { border-top: 1px solid #ccc; }
@@ -44,21 +41,16 @@ th { background-color: #f2f2f2; position: sticky; top: 0; z-index: 2; cursor: po
 th:hover { background-color: #e0e0e0; }
 
 /* --- Define Widths and Reduced Padding for First 3 Columns --- */
+/* !! Widths below might be less strictly enforced now, but still influence layout !! */
 /* !! ADJUST THESE WIDTHS AND THE CORRESPONDING 'left' VALUES BELOW !! */
-/* Column 1 (Stays Visible, e.g., Player Name) */
 th:nth-child(1), td:nth-child(1) { width: 150px; min-width: 150px; padding-left: 4px; padding-right: 4px; }
-/* Column 2 (Collapses, now maybe just first letter) */
 th:nth-child(2), td:nth-child(2) { width: 40px; min-width: 40px; padding-left: 4px; padding-right: 4px; text-align: center; }
-/* Column 3 (Collapses) */
 th:nth-child(3), td:nth-child(3) { width: 50px; min-width: 50px; padding-left: 4px; padding-right: 4px; }
 
-/* --- Sticky Columns (First 3) - UPDATE LEFT VALUES --- */
-/* Col 1 */
+/* --- Sticky Columns (First 3) - UPDATE LEFT VALUES if widths change --- */
 th:nth-child(1), td:nth-child(1) { position: sticky; left: 0; z-index: 3; }
-/* Col 2 - UPDATE left value to match width of Col 1 */
-th:nth-child(2), td:nth-child(2) { position: sticky; left: 150px; /* e.g., Col 1 width */ z-index: 3; }
-/* Col 3 - UPDATE left value to match width Col 1 + Col 2 */
-th:nth-child(3), td:nth-child(3) { position: sticky; left: 190px; /* e.g., 150px + 40px */ z-index: 3; }
+th:nth-child(2), td:nth-child(2) { position: sticky; left: 150px; /* Col 1 width */ z-index: 3; }
+th:nth-child(3), td:nth-child(3) { position: sticky; left: 190px; /* Col 1 + Col 2 width */ z-index: 3; }
 
 /* Backgrounds for sticky cells */
 thead th:nth-child(1), thead th:nth-child(2), thead th:nth-child(3) { background-color: #f2f2f2; z-index: 4; }
