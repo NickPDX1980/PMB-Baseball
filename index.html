@@ -10,12 +10,41 @@
 
     <h1>Parkrose Middle School Baseball</h1>
     <p>Welcome to the home for Parkrose Middle School Baseball statistics!</p>
-    <p>Current date: Saturday, April 26, 2025.</p> <h2>Player Statistics</h2>
+    <p id="last-updated">Loading last updated date...</p>
+
+    <h2>Player Statistics</h2>
     <ul>
         <li><a href="batting.html">Batting Stats</a></li>
         <li><a href="pitching.html">Pitching Stats</a></li>
         <li><a href="fielding.html">Fielding Stats</a></li>
     </ul>
 
-    </body>
+    <script>
+        // --- Fetch and display the last updated date ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const lastUpdatedElement = document.getElementById('last-updated');
+            if (lastUpdatedElement) {
+                fetch('last_updated.txt') // Fetch the text file
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+                        return response.text(); // Get the text content (the date)
+                    })
+                    .then(dateText => {
+                        // Update the paragraph text, trim potential whitespace from file
+                        lastUpdatedElement.textContent = `Statistics last updated: ${dateText.trim()}`;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching last updated date:', error);
+                        // Display an error or default message if fetching fails
+                        lastUpdatedElement.textContent = 'Could not load last updated date.';
+                        lastUpdatedElement.style.color = 'red'; // Optional: Indicate error
+                    });
+            }
+        });
+        // --- End fetch script ---
+    </script>
+
+</body>
 </html>
