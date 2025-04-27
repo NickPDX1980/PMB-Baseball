@@ -18,62 +18,62 @@ a:hover { text-decoration: underline; }
 .table-container {
     width: 100%;
     overflow-x: auto; /* Enable horizontal scrolling */
-    overflow-y: hidden; /* Prevent container itself from scrolling vertically if table fits */
+    /* --- VERTICAL SCROLL / HEIGHT LIMIT --- */
+    max-height: 70vh; /* Limit container height (e.g., 70% of viewport height, or try '600px') */
+    overflow-y: auto; /* Enable vertical scroll *if* content exceeds max-height */
+    /* --- END VERTICAL SCROLL / HEIGHT LIMIT --- */
     margin-top: 20px;
     border: 1px solid #ccc;
-    max-height: 70vh; /* Optional: Limit table height and make container vertically scrollable */
-    /* overflow-y: auto; */ /* Uncomment this if you want vertical scroll on the container */
+    position: relative; /* Can help establish context for sticky elements */
 }
 
 table {
     width: 100%;
     min-width: 600px;
-    border-collapse: separate; /* Use separate for sticky columns to work reliably with borders */
-    border-spacing: 0; /* Remove space between borders */
+    border-collapse: separate;
+    border-spacing: 0;
 }
 
 th, td {
-    border-bottom: 1px solid #ccc; /* Style borders slightly differently for separate model */
+    border-bottom: 1px solid #ccc;
     border-right: 1px solid #ccc;
     padding: 8px;
     text-align: left;
     vertical-align: top;
-    white-space: nowrap; /* Keep content on one line */
-    /* Background needed for sticky elements to hide content behind them */
-    background-color: #ffffff;
+    white-space: nowrap;
+    background-color: #ffffff; /* Default background for cells */
 }
-/* Add left/top borders for the first row/column */
 th:first-child, td:first-child { border-left: 1px solid #ccc; }
 thead tr:first-child th { border-top: 1px solid #ccc; }
-tfoot tr:first-child td { border-top: 1px solid #ccc; } /* Add top border for footer */
+tfoot tr:first-child td { border-top: 1px solid #ccc; }
 
 
 /* --- Sticky Header --- */
 th {
-    background-color: #f2f2f2; /* Header background */
+    background-color: #f2f2f2;
     position: sticky;
-    top: 0;
-    z-index: 2; /* Ensure header is above body cells but below frozen columns */
+    top: 0; /* Stick to the top of the scrolling container */
+    z-index: 2;
     cursor: pointer;
     user-select: none;
 }
 th:hover { background-color: #e0e0e0; }
 
 /* --- Sticky Columns (First 3) --- */
-/* Apply sticky to first 3 header cells AND first 3 body/footer cells */
+/* Apply sticky to first 3 header, body, and footer cells */
 th:nth-child(1), td:nth-child(1) { position: sticky; left: 0; z-index: 3; }
-th:nth-child(2), td:nth-child(2) { position: sticky; left: 80px; z-index: 3; } /* Adjust 'left' based on actual width of col 1 */
-th:nth-child(3), td:nth-child(3) { position: sticky; left: 160px; z-index: 3; } /* Adjust 'left' based on actual width of col 1+2 */
+th:nth-child(2), td:nth-child(2) { position: sticky; left: 80px; z-index: 3; } /* Adjust based on col 1 width */
+th:nth-child(3), td:nth-child(3) { position: sticky; left: 160px; z-index: 3; } /* Adjust based on col 1+2 width */
 
-/* Ensure sticky header cells have correct background */
+/* Ensure sticky header columns have correct background & are highest priority */
 thead th:nth-child(1),
 thead th:nth-child(2),
 thead th:nth-child(3) {
     background-color: #f2f2f2;
-    z-index: 4; /* Make sticky header columns highest priority */
+    z-index: 4;
 }
 
-/* Make sure body/footer sticky cells have correct background */
+/* Ensure sticky body/footer cells have correct background */
 tbody td:nth-child(1), tbody td:nth-child(2), tbody td:nth-child(3),
 tfoot td:nth-child(1), tfoot td:nth-child(2), tfoot td:nth-child(3) {
     background-color: #ffffff; /* Ensure body background covers */
@@ -82,7 +82,7 @@ tfoot td:nth-child(1), tfoot td:nth-child(2), tfoot td:nth-child(3) {
 /* --- Footer Styling --- */
 tfoot td {
     font-weight: bold;
-    background-color: #fafafa; /* Slightly different background for footer */
+    background-color: #fafafa;
 }
 /* Ensure sticky footer cells get correct background */
 tfoot td:nth-child(1), tfoot td:nth-child(2), tfoot td:nth-child(3) {
